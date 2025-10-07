@@ -1,4 +1,4 @@
-import { useLocation, Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, HashRouter } from "react-router-dom";
 import Home from "./pages/Home";
 import OfferingList from "./pages/OfferingList";
 import Header from "./components/Header";
@@ -9,18 +9,10 @@ import FloatingBooking from "./components/FloatingBooking";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppWrapper() {
-  const location = useLocation();
-
-  // Hide header/floating booking for certain paths
-  const hideItem = ["/login", "/dashboard"].some((path) =>
-    location.pathname.startsWith(path)
-  );
-
+  // No useLocation needed for HashRouter, optional
   return (
-    <>
-      {!hideItem && <Header />}
-      {!hideItem && <FloatingBooking />}
-
+    <HashRouter>
+      {/* Conditionally render Header/FloatingBooking if needed */}
       <Routes>
         {/* Public */}
         <Route path="/" element={<Home />} />
@@ -45,10 +37,10 @@ function AppWrapper() {
           }
         />
 
-        {/* Catch-all redirects unknown routes to home */}
+        {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </>
+    </HashRouter>
   );
 }
 
