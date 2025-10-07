@@ -3,3 +3,12 @@
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
+,
+{
+  "routes": [
+    { "src": "/", "dest": "/" },
+    { "src": "/login", "dest": "/" },
+    { "src": "/offerings", "dest": "/" }
+    // ....
+  ]
+}
