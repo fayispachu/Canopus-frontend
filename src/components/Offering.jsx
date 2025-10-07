@@ -1,5 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom"; // ✅ important
 import {
   UtensilsCrossed,
   Users,
@@ -48,7 +49,6 @@ function Offering() {
       id="offering"
       className="bg-white overflow-hidden py-20 px-6 md:px-16 text-gray-800"
     >
-      {/* HEADING */}
       <motion.h2
         className="kaushan-script-regular text-4xl md:text-5xl text-center text-red-600 mb-10"
         initial={{ opacity: 0, y: -30 }}
@@ -58,7 +58,6 @@ function Offering() {
         What We Offer
       </motion.h2>
 
-      {/* OFFERING GRID */}
       <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-8 max-w-7xl mx-auto">
         {offerings.map((item, index) => (
           <motion.div
@@ -77,14 +76,14 @@ function Offering() {
               <p className="text-gray-600 text-sm">{item.desc}</p>
             </div>
 
-            {/* Button */}
-            <motion.a
-              href={item.link}
-              className="bg-red-600 text-white font-medium py-2 px-4 rounded-full mt-6 inline-flex items-center justify-center gap-2 hover:bg-red-700 transition-all duration-200"
-              whileHover={{ scale: 1.08 }}
-            >
-              Explore <ArrowRight size={18} />
-            </motion.a>
+            <motion.div whileHover={{ scale: 1.08 }}>
+              <Link
+                to={item.link} // ✅ SPA navigation
+                className="bg-red-600 text-white font-medium py-2 px-4 rounded-full mt-6 inline-flex items-center justify-center gap-2 hover:bg-red-700 transition-all duration-200"
+              >
+                Explore <ArrowRight size={18} />
+              </Link>
+            </motion.div>
           </motion.div>
         ))}
       </div>
