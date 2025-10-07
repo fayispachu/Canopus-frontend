@@ -6,27 +6,28 @@ import Login from "./pages/Login";
 import UserProfile from "./pages/UserProfile";
 import Dashboard from "./pages/Dashboard";
 import FloatingBooking from "./components/FloatingBooking";
-
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppWrapper() {
   const location = useLocation();
 
-  // Hide header and floating booking for these routes
-  const hideitem = ["/login", "/dashboard"].includes(location.pathname);
+  // Hide header/floating booking for certain paths
+  const hideItem = ["/login", "/dashboard"].some((path) =>
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
-      {!hideitem && <Header />}
-      {!hideitem && <FloatingBooking />}
+      {!hideItem && <Header />}
+      {!hideItem && <FloatingBooking />}
 
       <Routes>
-        {/* Public Routes */}
+        {/* Public */}
         <Route path="/" element={<Home />} />
         <Route path="/offerings" element={<OfferingList />} />
         <Route path="/login" element={<Login />} />
 
-        {/* Protected User Routes */}
+        {/* Protected */}
         <Route
           path="/profile"
           element={
@@ -35,18 +36,17 @@ function AppWrapper() {
             </ProtectedRoute>
           }
         />
-
-        {/* Admin Routes */}
         <Route
           path="/dashboard"
           element={
-            <ProtectedRoute adminOnly={true}>
+            <ProtectedRoute adminOnly>
               <Dashboard />
             </ProtectedRoute>
           }
         />
 
-        {/* Catch-all */}
+        {/* Catch-all redirects unknown routes to home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>
   );

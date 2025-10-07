@@ -6,10 +6,10 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
+  base: "./", // Important for Vite assets
   build: {
-    outDir: "dist",
+    outDir: "dist", // Output folder for Vercel
   },
-  base: "./",
 });
 
 // aa

@@ -16,7 +16,7 @@ function App() {
           <WorkProvider>
             <MenuProvider>
               <GalleryProvider>
-                <BrowserRouter>
+                <BrowserRouter basename="/">
                   <AppWrapper />
                 </BrowserRouter>
               </GalleryProvider>
