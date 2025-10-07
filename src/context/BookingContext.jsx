@@ -6,7 +6,6 @@ const BookingContext = createContext();
 
 export const BookingProvider = ({ children }) => {
   const { user, setUser } = useContext(UserContext);
-
   const [bookings, setBookings] = useState([]);
   const [selectedItems, setSelectedItems] = useState([]);
   const [serviceType, setServiceType] = useState("rent");
@@ -14,59 +13,52 @@ export const BookingProvider = ({ children }) => {
   const [place, setPlace] = useState("");
   const [date, setDate] = useState("");
   const [guests, setGuests] = useState(1);
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
 
-  // Fetch bookings only when user._id changes
-  useEffect(() => {
-    if (!user?._id) {
-      setBookings([]);
-      return;
-    }
-
-    const fetchBookings = async () => {
-      try {
-        const res = await AxiosInstance.get(`/user/profile/${user._id}`);
-        const latestBookings = res.data.bookings || [];
-        setBookings(latestBookings);
-
-        // Update user only if bookings changed
-        if (JSON.stringify(user.bookings) !== JSON.stringify(latestBookings)) {
-          setUser((prev) => ({ ...prev, bookings: latestBookings }));
-        }
-      } catch (err) {
-        console.error("Fetch bookings failed:", err.response?.data || err);
-        setMessage("Failed to load bookings.");
+  // Fetch bookings
+  const fetchBookings = async (userParam = user) => {
+    if (!userParam?._id) return;
+    try {
+      const res =
+        userParam.role === "admin" || userParam.role === "manager"
+          ? await AxiosInstance.get("/booking")
+          : await AxiosInstance.get(`/booking/user/${userParam._id}`);
+      setBookings(res.data);
+      // Sync with user context
+      if (
+        userParam._id &&
+        JSON.stringify(user.bookings) !== JSON.stringify(res.data)
+      ) {
+        setUser((prev) => ({ ...prev, bookings: res.data }));
       }
-    };
+    } catch (err) {
+      console.error("Failed to fetch bookings:", err.response?.data || err);
+    }
+  };
 
-    fetchBookings();
-  }, [user?._id]);
-
+  // Add booking
   const addBooking = async (bookingData) => {
     if (!user?._id) {
       setMessage("You must be logged in to add a booking.");
       return;
     }
     try {
-      const res = await AxiosInstance.post(
-        `/user/profile/${user._id}/bookings`,
-        bookingData
-      );
-      const updatedBookings = res.data.bookings || [];
-      setBookings(updatedBookings);
-      setUser((prev) => ({ ...prev, bookings: updatedBookings }));
+      await AxiosInstance.post("/booking", {
+        customerId: user._id,
+        ...bookingData,
+      });
+      await fetchBookings();
       setMessage("Booking successfully added!");
     } catch (err) {
       console.error("Add booking failed:", err.response?.data || err);
-      setMessage(
-        err.response?.data?.message || "Booking failed. Please try again."
-      );
+      setMessage(err.response?.data?.message || "Booking failed. Try again.");
     }
   };
 
   const submitBooking = () => {
-    if (!event || !place || !date || !guests) {
-      setMessage("Please fill all required fields.");
+    if (!event || !place || !date || !guests || !phone) {
+      setMessage("Please fill all required fields including phone number.");
       return;
     }
 
@@ -75,17 +67,18 @@ export const BookingProvider = ({ children }) => {
       place,
       date,
       guests,
+      phone,
       serviceType,
-      selectedItems,
+      items: selectedItems.map((i) => ({ name: i.name, desc: i.desc })),
     };
-
     addBooking(bookingData);
 
-    // Reset form after submission
+    // Reset form
     setEvent("");
     setPlace("");
     setDate("");
     setGuests(1);
+    setPhone("");
     setServiceType("rent");
     setSelectedItems([]);
   };
@@ -98,10 +91,47 @@ export const BookingProvider = ({ children }) => {
     );
   };
 
+  // User cancel request
+  const handleCancelRequest = async (bookingId) => {
+    try {
+      const res = await AxiosInstance.patch(
+        `/booking/cancel-request/${bookingId}`
+      );
+      setBookings((prev) =>
+        prev.map((b) =>
+          b._id === bookingId ? { ...b, cancelRequest: true } : b
+        )
+      );
+      alert("Cancel request sent. Admin approval required.");
+      console.log(res.data, "cancel request response");
+    } catch (err) {
+      console.error("Cancel request failed:", err.response?.data || err);
+      alert("Failed to send cancel request.");
+    }
+  };
+
+  // Admin approve/reject cancel
+  const handleCancelConfirm = async (bookingId, approve = true) => {
+    try {
+      const res = await AxiosInstance.put(`/booking/cancel/${bookingId}`, {
+        approve,
+      });
+      // Update booking in local state
+      setBookings((prev) =>
+        prev.map((b) => (b._id === bookingId ? res.data.booking : b))
+      );
+      alert(res.data.message);
+    } catch (err) {
+      console.error("Cancel approval failed:", err.response?.data || err);
+      alert("Failed to process cancel approval.");
+    }
+  };
+
   return (
     <BookingContext.Provider
       value={{
         bookings,
+        fetchBookings,
         addBooking,
         selectedItems,
         toggleSelectItem,
@@ -115,9 +145,13 @@ export const BookingProvider = ({ children }) => {
         setDate,
         guests,
         setGuests,
+        phone,
+        setPhone,
         submitBooking,
         message,
         setMessage,
+        handleCancelRequest,
+        handleCancelConfirm,
       }}
     >
       {children}

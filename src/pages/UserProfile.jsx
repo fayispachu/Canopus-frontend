@@ -7,26 +7,53 @@ import {
   FaSignOutAlt,
   FaUpload,
 } from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
+import toast, { Toaster } from "react-hot-toast";
 import UserContext from "../context/UserContext";
 import BookingContext from "../context/BookingContext";
+import BookingForm from "../components/BookingForm";
 
 function UserProfile() {
+  const navigate = useNavigate();
   const { user, toggleAttendance, logoutUser, updateUser } =
     useContext(UserContext);
-  const { bookings, addBooking, updateBooking, deleteBooking } =
+  const { bookings, fetchBookings, handleCancelRequest } =
     useContext(BookingContext);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showBookingForm, setShowBookingForm] = useState(false);
   const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState(user?.email || "");
   const [image, setImage] = useState(user?.image || "");
+  const [showConfirm, setShowConfirm] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState(null);
+  const [localBookings, setLocalBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Keep local form state in sync with user context
+  // Pagination states
+  const [activePage, setActivePage] = useState(1);
+  const [cancelledPage, setCancelledPage] = useState(1);
+  const itemsPerPage = 5;
+
+  // Fetch bookings on mount
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      fetchBookings().finally(() => setLoading(false));
+    }
+  }, [user]);
+
+  // Sync user info
   useEffect(() => {
     setName(user?.name || "");
     setEmail(user?.email || "");
     setImage(user?.image || "");
   }, [user]);
+
+  // Sync bookings with local state
+  useEffect(() => {
+    setLocalBookings(bookings);
+  }, [bookings]);
 
   if (!user)
     return (
@@ -35,7 +62,10 @@ function UserProfile() {
       </div>
     );
 
-  const handleLogout = () => logoutUser();
+  const handleLogout = () => {
+    logoutUser();
+    toast.success("Logged out successfully!");
+  };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -49,14 +79,55 @@ function UserProfile() {
   const handleSave = () => {
     updateUser({ name, email, image });
     setIsEditing(false);
+    toast.success("Profile updated successfully!");
   };
 
-  const handleDeleteBooking = (bookingId) => {
-    deleteBooking(bookingId);
+  const confirmCancel = (booking) => {
+    setSelectedBooking(booking);
+    setShowConfirm(true);
   };
+
+  const handleConfirmCancel = () => {
+    setLocalBookings((prev) =>
+      prev.map((b) =>
+        b._id === selectedBooking._id ? { ...b, cancelRequest: true } : b
+      )
+    );
+    handleCancelRequest(selectedBooking._id);
+    setShowConfirm(false);
+    setSelectedBooking(null);
+    toast.success("Cancellation request sent!");
+  };
+
+  const handleCloseConfirm = () => {
+    setShowConfirm(false);
+    setSelectedBooking(null);
+  };
+
+  const activeBookings = localBookings.filter((b) => b.status !== "cancelled");
+  const cancelledBookings = localBookings.filter(
+    (b) => b.status === "cancelled"
+  );
+
+  const canAccessDashboard = ["admin", "manager", "staff"].includes(user?.role);
+
+  // Pagination slices
+  const activeStart = (activePage - 1) * itemsPerPage;
+  const activeEnd = activeStart + itemsPerPage;
+  const activeSlice = activeBookings.slice(activeStart, activeEnd);
+
+  const cancelledStart = (cancelledPage - 1) * itemsPerPage;
+  const cancelledEnd = cancelledStart + itemsPerPage;
+  const cancelledSlice = cancelledBookings.slice(cancelledStart, cancelledEnd);
+
+  const totalActivePages = Math.ceil(activeBookings.length / itemsPerPage);
+  const totalCancelledPages = Math.ceil(
+    cancelledBookings.length / itemsPerPage
+  );
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto pt-24 px-4 md:px-8 space-y-10">
         {/* User Info Card */}
         <div className="bg-white shadow-md rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
@@ -109,7 +180,6 @@ function UserProfile() {
                 </>
               )}
 
-              {/* Show role and attendance only if not a customer */}
               {user.role !== "customer" && (
                 <>
                   <p className="text-gray-500 capitalize">Role: {user.role}</p>
@@ -135,105 +205,219 @@ function UserProfile() {
           </div>
 
           {/* Action Buttons */}
-          <div className="flex gap-3 mt-4 md:mt-0">
-            {isEditing ? (
-              <>
-                <button
-                  onClick={handleSave}
-                  className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 flex items-center gap-2"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setIsEditing(false)}
-                  className="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500 flex items-center gap-2"
-                >
-                  Cancel
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
-                >
-                  <FaEdit /> Edit
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="bg-gray-600 text-white px-5 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
-                >
-                  <FaSignOutAlt /> Logout
-                </button>
-              </>
+          <div className="flex flex-col gap-3 mt-4 md:mt-0">
+            <div className="flex gap-3">
+              {isEditing ? (
+                <>
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-500 text-white px-5 py-2 rounded-lg hover:bg-green-600 flex items-center gap-2"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setIsEditing(false)}
+                    className="bg-gray-400 text-white px-5 py-2 rounded-lg hover:bg-gray-500 flex items-center gap-2"
+                  >
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsEditing(true)}
+                    className="bg-red-600 text-white px-5 py-2 rounded-lg hover:bg-red-700 flex items-center gap-2"
+                  >
+                    <FaEdit /> Edit
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="bg-gray-600 text-white px-5 py-2 rounded-lg hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <FaSignOutAlt /> Logout
+                  </button>
+                </>
+              )}
+            </div>
+
+            {["admin", "manager", "staff"].includes(user?.role) && (
+              <button
+                onClick={() => navigate("/dashboard")}
+                className="bg-blue-600 text-white px-5 py-2 rounded-lg hover:bg-blue-700 flex items-center gap-2"
+              >
+                Go to Dashboard
+              </button>
             )}
           </div>
         </div>
 
-        {/* Bookings Table */}
-        <div className="bg-white shadow-md rounded-xl p-6">
-          <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
-            <FaCalendarAlt className="text-red-500" /> Your Bookings
-          </h3>
+        {/* Loader */}
+        {loading && (
+          <div className="flex justify-center items-center h-32 text-gray-600">
+            Loading bookings...
+          </div>
+        )}
 
-          {(!bookings || bookings.length === 0) && (
-            <p className="text-gray-500">No bookings yet.</p>
-          )}
+        {!loading && (
+          <>
+            {/* Active Bookings */}
+            <BookingTable
+              title="Your Bookings"
+              bookings={activeSlice}
+              cancelAction={confirmCancel}
+              showCancel={true}
+              currentPage={activePage}
+              setPage={setActivePage}
+              totalPages={totalActivePages}
+            />
 
-          {bookings?.length > 0 && (
-            <div className="overflow-x-auto">
-              <table className="min-w-full table-auto border border-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 border-b text-left">Event</th>
-                    <th className="px-4 py-3 border-b text-left">Date</th>
-                    <th className="px-4 py-3 border-b text-left">Guests</th>
-                    <th className="px-4 py-3 border-b text-center">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {bookings.map((b) => (
-                    <tr
-                      key={b._id}
-                      className="hover:bg-gray-100 transition-all duration-150"
-                    >
-                      <td className="px-4 py-3 border-b">{b.event}</td>
-                      <td className="px-4 py-3 border-b">
-                        {new Date(b.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-4 py-3 border-b">{b.guests}</td>
-                      <td className="px-4 py-3 border-b text-center">
-                        <button
-                          onClick={() => handleDeleteBooking(b._id)}
-                          className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs"
-                        >
-                          Cancel
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+            {/* Cancelled Bookings */}
+            {cancelledBookings.length > 0 && (
+              <BookingTable
+                title="Cancelled Bookings"
+                bookings={cancelledSlice}
+                showCancel={false}
+                currentPage={cancelledPage}
+                setPage={setCancelledPage}
+                totalPages={totalCancelledPages}
+              />
+            )}
+          </>
+        )}
 
+        {/* Make New Booking Button */}
+        <div className="mt-4">
           <button
-            onClick={() =>
-              addBooking({
-                event: "New Event",
-                date: new Date(),
-                guests: 1,
-                items: [],
-              })
-            }
-            className="mt-4 flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition font-semibold"
+            onClick={() => setShowBookingForm(true)}
+            className="flex items-center gap-2 bg-green-500 text-white px-6 py-2 rounded hover:bg-green-600 transition font-semibold"
           >
             <FaPlus /> Make New Booking
           </button>
         </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      {showConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full text-center">
+            <h2 className="text-xl font-semibold mb-4">
+              Confirm Cancel Booking
+            </h2>
+            <p className="mb-6">
+              Are you sure you want to request cancellation for:{" "}
+              <span className="font-bold">{selectedBooking.event}</span>?
+            </p>
+            <div className="flex justify-center gap-4">
+              <button
+                onClick={handleConfirmCancel}
+                className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600"
+              >
+                Yes, Request Cancel
+              </button>
+              <button
+                onClick={handleCloseConfirm}
+                className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500"
+              >
+                No, Keep Booking
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Booking Form Popup */}
+      {showBookingForm && (
+        <BookingForm onClose={() => setShowBookingForm(false)} />
+      )}
     </div>
   );
 }
+
+// Separate BookingTable component for reuse with pagination
+const BookingTable = ({
+  title,
+  bookings,
+  cancelAction,
+  showCancel = true,
+  currentPage,
+  setPage,
+  totalPages,
+}) => (
+  <div className="bg-white shadow-md rounded-xl p-6 mt-6">
+    <h3
+      className={`text-2xl font-semibold mb-4 flex items-center gap-2 ${
+        showCancel ? "" : "text-red-600"
+      }`}
+    >
+      <FaCalendarAlt /> {title}
+    </h3>
+    {bookings.length === 0 ? (
+      <p className="text-gray-500">No bookings.</p>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-auto border border-gray-200">
+          <thead className={`bg-gray-50`}>
+            <tr>
+              <th className="px-4 py-3 border-b text-left">Event</th>
+              <th className="px-4 py-3 border-b text-left">Date</th>
+              <th className="px-4 py-3 border-b text-left">Guests</th>
+              {showCancel && (
+                <th className="px-4 py-3 border-b text-center">Action</th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {bookings.map((b) => (
+              <tr
+                key={b._id}
+                className="hover:bg-gray-100 transition-all duration-150"
+              >
+                <td className="px-4 py-3 border-b">{b.event}</td>
+                <td className="px-4 py-3 border-b">
+                  {new Date(b.date).toLocaleDateString()}
+                </td>
+                <td className="px-4 py-3 border-b">{b.guests}</td>
+                {showCancel && (
+                  <td className="px-4 py-3 border-b text-center">
+                    {b.cancelRequest ? (
+                      <span className="text-yellow-600 font-semibold text-xs">
+                        Request Sent
+                      </span>
+                    ) : (
+                      <button
+                        onClick={() => cancelAction(b)}
+                        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs"
+                      >
+                        Cancel
+                      </button>
+                    )}
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+    {/* Pagination */}
+    {totalPages > 1 && (
+      <div className="flex justify-center mt-4 gap-2">
+        {Array.from({ length: totalPages }, (_, i) => (
+          <button
+            key={i + 1}
+            onClick={() => setPage(i + 1)}
+            className={`px-3 py-1 rounded border ${
+              currentPage === i + 1
+                ? "bg-blue-500 text-white"
+                : "bg-white text-gray-700"
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+);
 
 export default UserProfile;

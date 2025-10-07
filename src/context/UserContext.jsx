@@ -9,6 +9,7 @@ export const UserProvider = ({ children }) => {
     email: true,
     whatsapp: true,
   });
+  const [loading, setLoading] = useState(true); // ✅ loading state
 
   // Load user from localStorage
   useEffect(() => {
@@ -20,6 +21,7 @@ export const UserProvider = ({ children }) => {
         parsedUser.notifications || { email: true, whatsapp: true }
       );
     }
+    setLoading(false); // finished loading
   }, []);
 
   const registerUser = async (userData) => {
@@ -27,6 +29,9 @@ export const UserProvider = ({ children }) => {
       const res = await AxiosInstance.post("/user/register", userData);
       setUser(res.data.user);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      const token = res.data.token;
+      localStorage.setItem("token", token); // save token
+
       return res.data.user;
     } catch (err) {
       console.error(err.response?.data || err);
@@ -39,9 +44,8 @@ export const UserProvider = ({ children }) => {
       const res = await AxiosInstance.post("/user/login", { email, password });
       setUser(res.data.user);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-
-      console.log("User logged in:", res.data.user);
-
+      const token = res.data.token;
+      localStorage.setItem("token", token); // save token
       return res.data.user;
     } catch (err) {
       console.error(err.response?.data || err);
@@ -85,6 +89,7 @@ export const UserProvider = ({ children }) => {
     setUser(null);
     setNotifications({ email: true, whatsapp: true });
     localStorage.removeItem("user");
+    localStorage.removeItem("token");
   };
 
   return (
@@ -92,6 +97,7 @@ export const UserProvider = ({ children }) => {
       value={{
         user,
         notifications,
+        loading, // ✅ pass loading
         setUser,
         registerUser,
         loginUser,

@@ -1,10 +1,23 @@
 import axios from "axios";
-
 const AxiosInstance = axios.create({
-  baseURL: "https://canopus-backend.onrender.com/api/",
+  baseURL: [
+    "http://localhost:4000/api/",
+    "https://canopus-backend.onrender.com/api/",
+  ], // or your deployed URL
   headers: {
     "Content-Type": "application/json",
   },
 });
-// s
+
+// Attach token automatically to all requests
+AxiosInstance.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token"); // get token from localStorage
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export default AxiosInstance;
+
+// https://canopus-backend.onrender.com
