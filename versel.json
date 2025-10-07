@@ -1,5 +1,6 @@
 {
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+  "routes": [
+    { "src": "/login", "dest": "/Login" },
+    { "src": "/[^.]+", "dest": "/", "status": 200 }
   ]
 }
