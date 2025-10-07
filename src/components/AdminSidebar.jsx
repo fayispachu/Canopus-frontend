@@ -12,7 +12,7 @@ import UserContext from "../context/UserContext";
 
 function AdminSidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   const { user } = useContext(UserContext);
-  // Base menu for all staff roles
+  // Base menu for all staff roles s
   let menuItems = [
     { label: "Dashboard", icon: <FaUserTie /> },
     { label: "Attendance", icon: <FaCalendarAlt /> },
