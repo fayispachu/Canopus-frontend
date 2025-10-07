@@ -1,4 +1,4 @@
-import { BrowserRouter } from "react-router-dom";
+// App.jsx
 import { UserProvider } from "./context/UserContext";
 import { BookingProvider } from "./context/BookingContext";
 import { AttendanceProvider } from "./context/AttendanceContext";
@@ -15,9 +15,7 @@ function App() {
           <WorkProvider>
             <MenuProvider>
               <GalleryProvider>
-                <BrowserRouter basename="/">
-                  <AppWrapper />
-                </BrowserRouter>
+                <AppWrapper />
               </GalleryProvider>
             </MenuProvider>
           </WorkProvider>
