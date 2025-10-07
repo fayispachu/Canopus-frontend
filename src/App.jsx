@@ -7,6 +7,7 @@ import { MenuProvider } from "./context/MenuContext";
 import { GalleryProvider } from "./context/GalleryContext";
 
 import AppWrapper from "./AppWrapper";
+import Header from "./components/Header";
 
 function App() {
   return (
@@ -17,6 +18,8 @@ function App() {
             <MenuProvider>
               <GalleryProvider>
                 <BrowserRouter basename="/">
+                  <Header />
+
                   <AppWrapper />
                 </BrowserRouter>
               </GalleryProvider>

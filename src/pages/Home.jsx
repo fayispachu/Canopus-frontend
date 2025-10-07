@@ -9,7 +9,7 @@ import Gallery from "../components/Gallery";
 import Footer from "../components/Footer";
 import BookingForm from "../components/BookingForm"; // ✅ import BookingForm
 import homeimage from "../assets/homeimage.jpg";
-
+import FloatingBooking from "../components/FloatingBooking";
 function Home() {
   const [showBooking, setShowBooking] = useState(false); // popup toggle
 
@@ -18,6 +18,7 @@ function Home() {
       {/* HERO SECTION */}
       <div className="w-[100%] min-h-[100vh] bg-red-500 flex flex-col md:flex-row items-center justify-center px-6 md:px-16 overflow-hidden pt-24">
         {/* LEFT SIDE — Text Section */}
+        <FloatingBooking />
         <motion.div
           className="w-full md:w-1/2 flex flex-col items-start justify-center text-left space-y-6"
           initial={{ opacity: 0, x: -60 }}
