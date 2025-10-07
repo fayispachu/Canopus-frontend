@@ -421,4 +421,3 @@ const BookingTable = ({
 );
 
 export default UserProfile;
-
