@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, HashRouter } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/Home";
 import OfferingList from "./pages/OfferingList";
 import Header from "./components/Header";
@@ -9,10 +9,10 @@ import FloatingBooking from "./components/FloatingBooking";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppWrapper() {
-  // No useLocation needed for HashRouter, optional
   return (
-    <HashRouter>
-      {/* Conditionally render Header/FloatingBooking if needed */}
+    <>
+      <Header />
+      <FloatingBooking />
       <Routes>
         {/* Public */}
         <Route path="/" element={<Home />} />
@@ -40,7 +40,7 @@ function AppWrapper() {
         {/* Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
-    </HashRouter>
+    </>
   );
 }
 

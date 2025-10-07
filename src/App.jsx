@@ -5,7 +5,6 @@ import { AttendanceProvider } from "./context/AttendanceContext";
 import { WorkProvider } from "./context/WorkContext";
 import { MenuProvider } from "./context/MenuContext";
 import { GalleryProvider } from "./context/GalleryContext";
-
 import AppWrapper from "./AppWrapper";
 
 function App() {
