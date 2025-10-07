@@ -6,7 +6,11 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
 
-  base: "./", // Important for Vite assets
+  build: {
+    outDir: "dist",
+    rollupOptions: {},
+  },
+  base: "/",
 });
 
 // aa
