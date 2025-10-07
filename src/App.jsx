@@ -1,10 +1,11 @@
-// App.jsx
+import { BrowserRouter } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { BookingProvider } from "./context/BookingContext";
 import { AttendanceProvider } from "./context/AttendanceContext";
 import { WorkProvider } from "./context/WorkContext";
 import { MenuProvider } from "./context/MenuContext";
 import { GalleryProvider } from "./context/GalleryContext";
+
 import AppWrapper from "./AppWrapper";
 
 function App() {
@@ -15,7 +16,9 @@ function App() {
           <WorkProvider>
             <MenuProvider>
               <GalleryProvider>
-                <AppWrapper />
+                <BrowserRouter basename="/">
+                  <AppWrapper />
+                </BrowserRouter>
               </GalleryProvider>
             </MenuProvider>
           </WorkProvider>
