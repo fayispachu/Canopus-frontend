@@ -11,6 +11,7 @@ function Login() {
     password: "",
     role: "customer",
   });
+  const [loading, setLoading] = useState(false);
 
   const { registerUser, loginUser } = useContext(UserContext);
   const navigate = useNavigate();
@@ -18,14 +19,48 @@ function Login() {
   const handleChange = (e) =>
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  const validateForm = () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!formData.email || !formData.password || (!isLogin && !formData.name)) {
+      alert("Please fill all required fields.");
+      return false;
+    }
+    if (!emailRegex.test(formData.email)) {
+      alert("Please enter a valid email address.");
+      return false;
+    }
+    if (formData.password.length < 6) {
+      alert("Password must be at least 6 characters.");
+      return false;
+    }
+    if (!isLogin && formData.name.trim().length < 2) {
+      alert("Name must be at least 2 characters.");
+      return false;
+    }
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLogin) {
-      const success = await loginUser(formData.email, formData.password);
-      if (success) navigate("/");
-    } else {
-      const success = await registerUser(formData);
-      if (success) navigate("/");
+    if (!validateForm()) return;
+
+    setLoading(true);
+    try {
+      if (isLogin) {
+        const success = await loginUser(formData.email, formData.password);
+        if (success) navigate("/");
+        else alert("Login failed. Check your credentials.");
+      } else {
+        const success = await registerUser(formData);
+        if (success) navigate("/");
+        else alert("Registration failed. Try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -48,7 +83,6 @@ function Login() {
           </h2>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            {/* Name Field (only for register) */}
             {!isLogin && (
               <div className="flex flex-col">
                 <label className="mb-2 font-medium text-gray-700">Name</label>
@@ -64,7 +98,6 @@ function Login() {
               </div>
             )}
 
-            {/* Email */}
             <div className="flex flex-col">
               <label className="mb-2 font-medium text-gray-700">Email</label>
               <input
@@ -78,7 +111,6 @@ function Login() {
               />
             </div>
 
-            {/* Password */}
             <div className="flex flex-col">
               <label className="mb-2 font-medium text-gray-700">Password</label>
               <input
@@ -92,7 +124,6 @@ function Login() {
               />
             </div>
 
-            {/* Role Selector — show only when Registering */}
             {!isLogin && (
               <div className="flex flex-col">
                 <label className="mb-2 font-medium text-gray-700">Role</label>
@@ -109,15 +140,22 @@ function Login() {
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
-              className="mt-4 w-full bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition font-semibold"
+              disabled={loading}
+              className={`mt-4 w-full bg-red-600 text-white py-3 rounded-xl hover:bg-red-700 transition font-semibold ${
+                loading ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
-              {isLogin ? "Login" : "Register"}
+              {loading
+                ? isLogin
+                  ? "Logging in..."
+                  : "Registering..."
+                : isLogin
+                ? "Login"
+                : "Register"}
             </button>
 
-            {/* Toggle between login/register */}
             <p className="mt-4 text-sm text-center text-gray-500">
               {isLogin ? "Don't have an account?" : "Already have an account?"}{" "}
               <span

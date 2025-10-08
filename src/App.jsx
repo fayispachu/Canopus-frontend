@@ -28,21 +28,21 @@ function AppContent() {
 
 function App() {
   return (
-    <UserProvider>
-      <BookingProvider>
-        <AttendanceProvider>
-          <WorkProvider>
-            <MenuProvider>
-              <GalleryProvider>
-                <BrowserRouter>
+    <BrowserRouter>
+      <UserProvider>
+        <BookingProvider>
+          <AttendanceProvider>
+            <WorkProvider>
+              <MenuProvider>
+                <GalleryProvider>
                   <AppContent />
-                </BrowserRouter>
-              </GalleryProvider>
-            </MenuProvider>
-          </WorkProvider>
-        </AttendanceProvider>
-      </BookingProvider>
-    </UserProvider>
+                </GalleryProvider>
+              </MenuProvider>
+            </WorkProvider>
+          </AttendanceProvider>
+        </BookingProvider>
+      </UserProvider>
+    </BrowserRouter>
   );
 }
 

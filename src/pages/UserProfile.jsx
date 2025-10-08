@@ -30,29 +30,33 @@ function UserProfile() {
   const [localBookings, setLocalBookings] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Pagination states
-  const [activePage, setActivePage] = useState(1);
-  const [cancelledPage, setCancelledPage] = useState(1);
-  const itemsPerPage = 5;
+  // Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
-  // Fetch bookings on mount
+  // Fetch bookings safely
   useEffect(() => {
     if (user) {
       setLoading(true);
-      fetchBookings().finally(() => setLoading(false));
+      fetchBookings()
+        .catch((err) => {
+          console.error("Failed to fetch bookings:", err);
+          toast.error("Failed to fetch bookings!");
+        })
+        .finally(() => setLoading(false));
     }
   }, [user]);
 
-  // Sync user info
+  // Sync local state
   useEffect(() => {
     setName(user?.name || "");
     setEmail(user?.email || "");
     setImage(user?.image || "");
   }, [user]);
 
-  // Sync bookings with local state
+  // Ensure localBookings is always an array
   useEffect(() => {
-    setLocalBookings(bookings);
+    setLocalBookings(Array.isArray(bookings) ? bookings : []);
   }, [bookings]);
 
   if (!user)
@@ -88,15 +92,17 @@ function UserProfile() {
   };
 
   const handleConfirmCancel = () => {
+    if (!selectedBooking) return;
     setLocalBookings((prev) =>
       prev.map((b) =>
         b._id === selectedBooking._id ? { ...b, cancelRequest: true } : b
       )
     );
-    handleCancelRequest(selectedBooking._id);
+    handleCancelRequest(selectedBooking._id)
+      .then(() => toast.success("Cancellation request sent!"))
+      .catch(() => toast.error("Failed to send cancellation request"));
     setShowConfirm(false);
     setSelectedBooking(null);
-    toast.success("Cancellation request sent!");
   };
 
   const handleCloseConfirm = () => {
@@ -104,32 +110,26 @@ function UserProfile() {
     setSelectedBooking(null);
   };
 
-  const activeBookings = localBookings.filter((b) => b.status !== "cancelled");
-  const cancelledBookings = localBookings.filter(
-    (b) => b.status === "cancelled"
-  );
+  // Filter bookings safely: admin sees all, others see only theirs
+  const displayBookings = Array.isArray(localBookings)
+    ? user.role === "admin"
+      ? [...localBookings].sort(
+          (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+        )
+      : localBookings.filter((b) => b.status !== "cancelled")
+    : [];
 
-  const canAccessDashboard = ["admin", "manager", "staff"].includes(user?.role);
-
-  // Pagination slices
-  const activeStart = (activePage - 1) * itemsPerPage;
-  const activeEnd = activeStart + itemsPerPage;
-  const activeSlice = activeBookings.slice(activeStart, activeEnd);
-
-  const cancelledStart = (cancelledPage - 1) * itemsPerPage;
-  const cancelledEnd = cancelledStart + itemsPerPage;
-  const cancelledSlice = cancelledBookings.slice(cancelledStart, cancelledEnd);
-
-  const totalActivePages = Math.ceil(activeBookings.length / itemsPerPage);
-  const totalCancelledPages = Math.ceil(
-    cancelledBookings.length / itemsPerPage
-  );
+  // Pagination slice
+  const start = (currentPage - 1) * itemsPerPage;
+  const end = start + itemsPerPage;
+  const currentSlice = displayBookings.slice(start, end);
+  const totalPages = Math.ceil(displayBookings.length / itemsPerPage);
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Toaster position="top-right" />
       <div className="max-w-7xl mx-auto pt-24 px-4 md:px-8 space-y-10">
-        {/* User Info Card */}
+        {/* --- User Info Card --- */}
         <div className="bg-white shadow-md rounded-xl p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -156,7 +156,6 @@ function UserProfile() {
                 </label>
               )}
             </div>
-
             <div className="flex flex-col gap-2">
               {isEditing ? (
                 <>
@@ -179,7 +178,6 @@ function UserProfile() {
                   <p className="text-gray-600">{email}</p>
                 </>
               )}
-
               {user.role !== "customer" && (
                 <>
                   <p className="text-gray-500 capitalize">Role: {user.role}</p>
@@ -203,8 +201,6 @@ function UserProfile() {
               )}
             </div>
           </div>
-
-          {/* Action Buttons */}
           <div className="flex flex-col gap-3 mt-4 md:mt-0">
             <div className="flex gap-3">
               {isEditing ? (
@@ -239,7 +235,6 @@ function UserProfile() {
                 </>
               )}
             </div>
-
             {["admin", "manager", "staff"].includes(user?.role) && (
               <button
                 onClick={() => navigate("/dashboard")}
@@ -251,7 +246,7 @@ function UserProfile() {
           </div>
         </div>
 
-        {/* Loader */}
+        {/* --- Loader --- */}
         {loading && (
           <div className="flex justify-center items-center h-32 text-gray-600">
             Loading bookings...
@@ -260,32 +255,18 @@ function UserProfile() {
 
         {!loading && (
           <>
-            {/* Active Bookings */}
             <BookingTable
-              title="Your Bookings"
-              bookings={activeSlice}
+              title="Bookings"
+              bookings={currentSlice}
               cancelAction={confirmCancel}
-              showCancel={true}
-              currentPage={activePage}
-              setPage={setActivePage}
-              totalPages={totalActivePages}
+              showCancel={user.role !== "admin"}
+              currentPage={currentPage}
+              setPage={setCurrentPage}
+              totalPages={totalPages}
             />
-
-            {/* Cancelled Bookings */}
-            {cancelledBookings.length > 0 && (
-              <BookingTable
-                title="Cancelled Bookings"
-                bookings={cancelledSlice}
-                showCancel={false}
-                currentPage={cancelledPage}
-                setPage={setCancelledPage}
-                totalPages={totalCancelledPages}
-              />
-            )}
           </>
         )}
 
-        {/* Make New Booking Button */}
         <div className="mt-4">
           <button
             onClick={() => setShowBookingForm(true)}
@@ -296,7 +277,6 @@ function UserProfile() {
         </div>
       </div>
 
-      {/* Cancel Confirmation Modal */}
       {showConfirm && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-xl shadow-lg max-w-md w-full text-center">
@@ -305,7 +285,7 @@ function UserProfile() {
             </h2>
             <p className="mb-6">
               Are you sure you want to request cancellation for:{" "}
-              <span className="font-bold">{selectedBooking.event}</span>?
+              <span className="font-bold">{selectedBooking?.event}</span>?
             </p>
             <div className="flex justify-center gap-4">
               <button
@@ -325,7 +305,6 @@ function UserProfile() {
         </div>
       )}
 
-      {/* Booking Form Popup */}
       {showBookingForm && (
         <BookingForm onClose={() => setShowBookingForm(false)} />
       )}
@@ -333,7 +312,7 @@ function UserProfile() {
   );
 }
 
-// Separate BookingTable component for reuse with pagination
+// BookingTable component
 const BookingTable = ({
   title,
   bookings,
@@ -344,19 +323,15 @@ const BookingTable = ({
   totalPages,
 }) => (
   <div className="bg-white shadow-md rounded-xl p-6 mt-6">
-    <h3
-      className={`text-2xl font-semibold mb-4 flex items-center gap-2 ${
-        showCancel ? "" : "text-red-600"
-      }`}
-    >
+    <h3 className="text-2xl font-semibold mb-4 flex items-center gap-2">
       <FaCalendarAlt /> {title}
     </h3>
-    {bookings.length === 0 ? (
+    {!bookings || bookings.length === 0 ? (
       <p className="text-gray-500">No bookings.</p>
     ) : (
       <div className="overflow-x-auto">
         <table className="min-w-full table-auto border border-gray-200">
-          <thead className={`bg-gray-50`}>
+          <thead className="bg-gray-50">
             <tr>
               <th className="px-4 py-3 border-b text-left">Event</th>
               <th className="px-4 py-3 border-b text-left">Date</th>
@@ -400,7 +375,7 @@ const BookingTable = ({
       </div>
     )}
     {/* Pagination */}
-    {totalPages > 1 && (
+    {totalPages > 1 && currentPage && setPage && (
       <div className="flex justify-center mt-4 gap-2">
         {Array.from({ length: totalPages }, (_, i) => (
           <button

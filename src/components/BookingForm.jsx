@@ -31,7 +31,6 @@ function BookingForm({ onClose }) {
   const handleSubmit = (e) => {
     e.preventDefault();
     submitBooking();
-
     setShowSuccessPopup(true);
 
     // reset form
@@ -54,19 +53,19 @@ function BookingForm({ onClose }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 bg-black/60 flex justify-center items-center z-50 overflow-auto p-4"
+        className="fixed inset-0 bg-black/50 flex justify-center items-start md:items-center z-50 p-4 overflow-auto"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
+          initial={{ scale: 0.95, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          className="bg-white rounded-2xl shadow-xl w-full max-w-3xl relative overflow-y-auto max-h-[90vh] p-6 md:p-10"
+          exit={{ scale: 0.95, opacity: 0 }}
+          className="bg-gray-50  w-full max-w-3xl relative p-6 md:p-10"
           onClick={(e) => e.stopPropagation()}
         >
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl"
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl"
           >
             <FaTimes />
           </button>
@@ -79,40 +78,18 @@ function BookingForm({ onClose }) {
             {/* Event & Venue */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {[
-                {
-                  label: "Event Name",
-                  value: event,
-                  setter: setEvent,
-                  type: "text",
-                },
-                {
-                  label: "Venue / Place",
-                  value: place,
-                  setter: setPlace,
-                  type: "text",
-                },
-                {
-                  label: "Event Date",
-                  value: date,
-                  setter: setDate,
-                  type: "date",
-                },
-                {
-                  label: "Number of Guests",
-                  value: guests,
-                  setter: setGuests,
-                  type: "number",
-                },
+                { label: "Event Name", value: event, setter: setEvent, type: "text" },
+                { label: "Venue / Place", value: place, setter: setPlace, type: "text" },
+                { label: "Event Date", value: date, setter: setDate, type: "date" },
+                { label: "Number of Guests", value: guests, setter: setGuests, type: "number" },
               ].map((field) => (
                 <div key={field.label} className="flex flex-col">
-                  <label className="mb-1 font-medium text-gray-700">
-                    {field.label}
-                  </label>
+                  <label className="mb-1 font-medium text-gray-700">{field.label}</label>
                   <input
                     type={field.type}
                     value={field.value}
                     onChange={(e) => field.setter(e.target.value)}
-                    className="p-3 border rounded-lg focus:ring focus:ring-orange-300 w-full"
+                    className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition w-full bg-white"
                     required
                   />
                 </div>
@@ -121,14 +98,12 @@ function BookingForm({ onClose }) {
 
             {/* Phone */}
             <div className="flex flex-col">
-              <label className="mb-1 font-medium text-gray-700">
-                Phone Number
-              </label>
+              <label className="mb-1 font-medium text-gray-700">Phone Number</label>
               <input
                 type="tel"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="p-3 border rounded-lg focus:ring focus:ring-orange-300 w-full"
+                className="p-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-400 transition w-full bg-white"
                 required
               />
             </div>
@@ -137,10 +112,7 @@ function BookingForm({ onClose }) {
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
               <span className="font-medium text-gray-700">Service Type:</span>
               {["rent", "catering"].map((type) => (
-                <label
-                  key={type}
-                  className="flex items-center gap-2 cursor-pointer"
-                >
+                <label key={type} className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"
                     name="serviceType"
@@ -149,22 +121,22 @@ function BookingForm({ onClose }) {
                     onChange={() => setServiceType(type)}
                     className="accent-orange-500"
                   />
-                  {type === "rent" ? "Rent Only" : "Book Catering Service"}
+                  <span className="capitalize text-gray-800">
+                    {type === "rent" ? "Rent Only" : "Book Catering Service"}
+                  </span>
                 </label>
               ))}
             </div>
 
             {/* Selected Items */}
             <div className="flex flex-col">
-              <label className="mb-2 font-medium text-gray-700">
-                Selected Items
-              </label>
+              <label className="mb-2 font-medium text-gray-700">Selected Items</label>
               {selectedItems?.length > 0 ? (
-                <ul className="space-y-2 mb-2 max-h-40 overflow-y-auto">
+                <ul className="space-y-2 mb-2 overflow-auto max-h-60 scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-gray-100">
                   {selectedItems.map((item) => (
                     <li
                       key={item._id}
-                      className="flex justify-between items-center bg-orange-100 border border-orange-400 px-4 py-2 rounded"
+                      className="flex justify-between items-center bg-orange-50 border border-orange-200 px-4 py-2 rounded-lg"
                     >
                       <span>{item.name}</span>
                       <button
@@ -183,7 +155,7 @@ function BookingForm({ onClose }) {
               <button
                 type="button"
                 onClick={() => setShowPopup(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold w-max"
+                className="px-4 py-2 bg-orange-500 text-white rounded-xl hover:bg-orange-600 transition font-semibold w-max"
               >
                 Select Items
               </button>
@@ -192,15 +164,13 @@ function BookingForm({ onClose }) {
             {/* Submit Button */}
             <button
               type="submit"
-              className="w-full bg-orange-600 text-white py-3 rounded-lg hover:bg-orange-700 transition font-semibold text-lg"
+              className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 rounded-xl hover:from-orange-600 hover:to-orange-700 transition font-semibold text-lg"
             >
               Submit Booking
             </button>
 
             {message && (
-              <p className="text-center text-gray-700 mt-2 text-sm">
-                {message}
-              </p>
+              <p className="text-center text-gray-700 mt-2 text-sm">{message}</p>
             )}
           </form>
 
@@ -215,12 +185,7 @@ function BookingForm({ onClose }) {
                 exit={{ opacity: 0, scale: 0.8 }}
                 className="fixed inset-0 bg-black/50 flex justify-center items-center z-50"
               >
-                <motion.div
-                  className="bg-white p-8 rounded-xl shadow-lg max-w-md w-full text-center"
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  exit={{ scale: 0.8, opacity: 0 }}
-                >
+                <motion.div className="bg-white p-8 rounded-2xl shadow-lg max-w-md w-full text-center">
                   <h2 className="text-xl font-bold mb-4 text-gray-800">
                     Booking Successful
                   </h2>
@@ -230,7 +195,7 @@ function BookingForm({ onClose }) {
                   </p>
                   <button
                     onClick={closeSuccessPopup}
-                    className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition font-semibold"
+                    className="bg-green-600 text-white px-6 py-2 rounded-xl hover:bg-green-700 transition font-semibold"
                   >
                     OK
                   </button>

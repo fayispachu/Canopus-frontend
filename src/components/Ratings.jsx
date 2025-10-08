@@ -69,7 +69,7 @@ function Ratings() {
     );
 
   return (
-    <div className="overflow-hidden w-full py-16 bg-red-500 relative px-4">
+    <div id="reviews" className="overflow-hidden w-full py-16 bg-red-500 relative px-4">
       <div className="text-center mb-8">
         <h2 className="text-3xl md:text-4xl font-bold text-white mb-2">
           What Our Customers Say
