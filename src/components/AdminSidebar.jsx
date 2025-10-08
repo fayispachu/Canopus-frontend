@@ -25,7 +25,7 @@ function AdminSidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
     menuItems.push({ label: "User Management", icon: <FaUsers /> });
   }
 
-  // Add settings and logout for all users
+  // Add settings and logout for all users s
   menuItems.push(
     { label: "Settings", icon: <FaCog /> },
     { label: "Logout", icon: <FaSignOutAlt /> }
