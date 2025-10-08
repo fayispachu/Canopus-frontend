@@ -14,8 +14,9 @@ function AppContent() {
 
   // Pages where Header should be hidden
   const noHeaderRoutes = ["/login", "/dashboard"];
-
-  const hideHeader = noHeaderRoutes.includes(location.pathname);
+  const hideHeader = noHeaderRoutes.some((route) =>
+    location.pathname.includes(route)
+  );
 
   return (
     <>
@@ -33,7 +34,7 @@ function App() {
           <WorkProvider>
             <MenuProvider>
               <GalleryProvider>
-                <BrowserRouter basename="/">
+                <BrowserRouter>
                   <AppContent />
                 </BrowserRouter>
               </GalleryProvider>

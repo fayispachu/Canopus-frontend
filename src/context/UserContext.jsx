@@ -5,13 +5,13 @@ const UserContext = createContext();
 
 export const UserProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [allUsers, setAllUsers] = useState([]); // all users including customers
   const [notifications, setNotifications] = useState({
     email: true,
     whatsapp: true,
   });
-  const [loading, setLoading] = useState(true); // ✅ loading state
+  const [loading, setLoading] = useState(true);
 
-  // Load user from localStorage
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
@@ -21,20 +21,44 @@ export const UserProvider = ({ children }) => {
         parsedUser.notifications || { email: true, whatsapp: true }
       );
     }
-    setLoading(false); // finished loading
+    fetchAllUsers(); // fetch users on load
+    setLoading(false);
   }, []);
 
+  // Fetch all users (admin/managers)
+  const fetchAllUsers = async () => {
+    try {
+      const res = await AxiosInstance.get("/user/users");
+      setAllUsers(res.data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  };
+
+  // Register normal user (public)
   const registerUser = async (userData) => {
     try {
       const res = await AxiosInstance.post("/user/register", userData);
       setUser(res.data.user);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      const token = res.data.token;
-      localStorage.setItem("token", token); // save token
-
+      localStorage.setItem("token", res.data.token);
+      await fetchAllUsers();
       return res.data.user;
     } catch (err) {
       console.error(err.response?.data || err);
+      throw err;
+    }
+  };
+
+  // Admin creating user
+  const createUser = async (userData) => {
+    try {
+      const res = await AxiosInstance.post("/user/register/create", userData);
+      // update allUsers state to include the new user
+      setAllUsers((prev) => [...prev, res.data.user]);
+      return res.data.user;
+    } catch (err) {
+      console.error("Failed to create user:", err.response?.data || err);
       throw err;
     }
   };
@@ -44,8 +68,8 @@ export const UserProvider = ({ children }) => {
       const res = await AxiosInstance.post("/user/login", { email, password });
       setUser(res.data.user);
       localStorage.setItem("user", JSON.stringify(res.data.user));
-      const token = res.data.token;
-      localStorage.setItem("token", token); // save token
+      localStorage.setItem("token", res.data.token);
+      await fetchAllUsers();
       return res.data.user;
     } catch (err) {
       console.error(err.response?.data || err);
@@ -59,6 +83,7 @@ export const UserProvider = ({ children }) => {
       const res = await AxiosInstance.put(`/user/profile/${user._id}`, updates);
       setUser(res.data.user);
       localStorage.setItem("user", JSON.stringify(res.data.user));
+      await fetchAllUsers();
       return res.data.user;
     } catch (err) {
       console.error(err);
@@ -87,6 +112,7 @@ export const UserProvider = ({ children }) => {
 
   const logoutUser = () => {
     setUser(null);
+    setAllUsers([]);
     setNotifications({ email: true, whatsapp: true });
     localStorage.removeItem("user");
     localStorage.removeItem("token");
@@ -96,15 +122,18 @@ export const UserProvider = ({ children }) => {
     <UserContext.Provider
       value={{
         user,
+        allUsers,
         notifications,
-        loading, // ✅ pass loading
+        loading,
         setUser,
         registerUser,
+        createUser, // 👈 added
         loginUser,
         updateUser,
         updateNotifications,
         toggleAttendance,
         logoutUser,
+        fetchAllUsers,
       }}
     >
       {children}

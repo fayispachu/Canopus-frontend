@@ -15,7 +15,7 @@ function AdminSidebar({ active, setActive, sidebarOpen, setSidebarOpen }) {
   // Base menu for all staff roles s
   let menuItems = [
     { label: "Dashboard", icon: <FaUserTie /> },
-    { label: "Attendance", icon: <FaCalendarAlt /> },
+    // { label: "Attendance", icon: <FaCalendarAlt /> },
     { label: "Works", icon: <FaTasks /> },
     { label: "Latest Bookings", icon: <FaCalendarAlt /> },
   ];

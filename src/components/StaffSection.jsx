@@ -1,125 +1,143 @@
-import React, { useState } from "react";
-import { motion } from "framer-motion";
-import { FaUser, FaSmile, FaUserCheck, FaUsers } from "react-icons/fa";
+import { useContext, useEffect, useState } from "react";
+import {
+  FaUsers,
+  FaTasks,
+  FaCheckCircle,
+  FaHourglassHalf,
+} from "react-icons/fa";
+import UserContext from "../context/UserContext";
+import WorkContext from "../context/WorkContext";
 
 function StaffSection() {
-  const staffData = [
+  const { allUsers = [], loading: usersLoading } = useContext(UserContext);
+  const { allWorks = [], loading: worksLoading } = useContext(WorkContext);
+
+  const [stats, setStats] = useState({
+    staff: 0,
+    totalWorks: 0,
+    completedWorks: 0,
+    pendingWorks: 0,
+  });
+
+  useEffect(() => {
+    if (!usersLoading && !worksLoading) {
+      // Filter only staff
+      const staffUsers = allUsers.filter((u) => u.role === "staff");
+
+      // Calculate completed and pending works
+      const completedWorks = allWorks.filter(
+        (w) => w.status === "completed"
+      ).length;
+      const pendingWorks = allWorks.filter(
+        (w) => w.status !== "completed"
+      ).length;
+
+      setStats({
+        staff: staffUsers.length,
+        totalWorks: allWorks.length,
+        completedWorks,
+        pendingWorks,
+      });
+    }
+  }, [allUsers, allWorks, usersLoading, worksLoading]);
+
+  if (usersLoading || worksLoading) return <p>Loading...</p>;
+
+  const cardData = [
     {
-      name: "Aisha Khan",
-      jobTitle: "Event Coordinator",
-      department: "Catering",
+      title: "Total Staffs",
+      count: stats.staff,
+      icon: <FaUsers className="text-2xl" />,
+      color: "bg-red-500",
     },
-    { name: "Rahul Menon", jobTitle: "Chef", department: "Kitchen" },
-    { name: "Linda Parker", jobTitle: "Waiter", department: "Service" },
-    { name: "Ravi Kumar", jobTitle: "Cleaner", department: "Maintenance" },
+    {
+      title: "Total Works",
+      count: stats.totalWorks,
+      icon: <FaTasks className="text-2xl" />,
+      color: "bg-red-500",
+    },
+    {
+      title: "Completed Works",
+      count: stats.completedWorks,
+      icon: <FaCheckCircle className="text-2xl" />,
+      color: "bg-red-500",
+    },
+    {
+      title: "Pending Works",
+      count: stats.pendingWorks,
+      icon: <FaHourglassHalf className="text-2xl" />,
+      color: "bg-red-500",
+    },
   ];
 
-  const [searchTerm, setSearchTerm] = useState("");
-
-  const filteredStaff = staffData.filter(
-    (s) =>
-      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.jobTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.department.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Filter users for table
+  const filteredUsers = allUsers.filter((u) => u.role === "staff");
 
   return (
-    <>
-      <h1 className="text-2xl font-semibold mb-6 text-gray-800">
-        Manage Staff
-      </h1>
-
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard
-          icon={<FaUsers />}
-          label="Total Staff"
-          value="42"
-          color="text-red-600"
-        />
-        <StatCard
-          icon={<FaUserCheck />}
-          label="Active Staff"
-          value="38"
-          color="text-green-600"
-        />
-        <StatCard
-          icon={<FaSmile />}
-          label="On Leave"
-          value="3"
-          color="text-yellow-500"
-        />
-        <StatCard
-          icon={<FaUser />}
-          label="New Joinees"
-          value="1"
-          color="text-blue-600"
-        />
+    <div className="space-y-6">
+      {/* Summary Cards */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {cardData.map((card, index) => (
+          <div
+            key={index}
+            className={`p-4 ${card.color} text-white shadow flex flex-col items-center justify-center transform hover:scale-105 transition-transform duration-200`}
+          >
+            {card.icon}
+            <h2 className="text-xl font-bold mt-2">{card.count}</h2>
+            <p className="text-sm uppercase tracking-wide">{card.title}</p>
+          </div>
+        ))}
       </div>
 
-      {/* Search + Table */}
-      <div className="bg-white shadow rounded-lg p-4">
-        <div className="flex justify-between mb-4">
-          <input
-            type="text"
-            placeholder="Search staff..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full p-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-red-400"
-          />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="min-w-full border border-gray-200 text-sm">
-            <thead className="bg-gray-100 text-gray-700">
-              <tr>
-                <th className="py-3 px-4 text-left">Name</th>
-                <th className="py-3 px-4 text-left">Job Title</th>
-                <th className="py-3 px-4 text-left">Department</th>
+      {/* Users Table */}
+      <div className="overflow-x-auto bg-white shadow rounded-xl p-4">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                #
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Name
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Role
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Email
+              </th>
+              <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Image
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredUsers.map((u, index) => (
+              <tr
+                key={u._id}
+                className="hover:bg-gray-50 transition-colors duration-200"
+              >
+                <td className="px-4 py-2">{index + 1}</td>
+                <td className="px-4 py-2 font-semibold">{u.name}</td>
+                <td className="px-4 py-2">{u.role}</td>
+                <td className="px-4 py-2">{u.email}</td>
+                <td className="px-4 py-2">
+                  <img
+                    src={
+                      u.image ||
+                      "https://randomuser.me/api/portraits/men/12.jpg"
+                    }
+                    alt={u.name}
+                    className="w-8 h-8 rounded-full border border-gray-300"
+                  />
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {filteredStaff.map((staff, index) => (
-                <motion.tr
-                  key={index}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="border-t hover:bg-gray-50"
-                >
-                  <td className="py-3 px-4 flex items-center gap-2">
-                    <img
-                      src={`https://randomuser.me/api/portraits/${
-                        index % 2 === 0 ? "men" : "women"
-                      }/${index + 20}.jpg`}
-                      alt={staff.name}
-                      className="w-8 h-8 rounded-full border"
-                    />
-                    {staff.name}
-                  </td>
-                  <td className="py-3 px-4">{staff.jobTitle}</td>
-                  <td className="py-3 px-4">{staff.department}</td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </>
+    </div>
   );
 }
-
-const StatCard = ({ icon, label, value, color }) => (
-  <motion.div
-    whileHover={{ scale: 1.05 }}
-    className="flex items-center gap-4 bg-white rounded-xl shadow p-4"
-  >
-    <div className={`text-3xl ${color}`}>{icon}</div>
-    <div>
-      <p className="text-gray-500 text-sm">{label}</p>
-      <h2 className="text-xl font-semibold">{value}</h2>
-    </div>
-  </motion.div>
-);
 
 export default StaffSection;

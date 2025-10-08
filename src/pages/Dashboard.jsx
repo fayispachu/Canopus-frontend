@@ -1,20 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { FaBars } from "react-icons/fa";
 import AdminSidebar from "../components/AdminSidebar";
-import { motion } from "framer-motion";
+import UserContext from "../context/UserContext";
 
-// Import internal sections
-import Attendance from "../components/AttendanceSection"; // 👈 create this component below
-import StaffSection from "../components/StaffSection"; // 👈 create this component below
+// Import sections
+import Attendance from "../components/AttendanceSection";
+import StaffSection from "../components/StaffSection";
 import UserManagement from "../components/UserManagement";
 import WorkManagement from "../components/WorkManagement";
 import LatestBookings from "../components/LatestBookings";
 
 function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [active, setActive] = useState("Dashboard"); // 👈 state to track active section
+  const [active, setActive] = useState("Dashboard");
 
-  // Render component based on active menu
+  const { user } = useContext(UserContext); // 👈 get real user data
+
   const renderContent = () => {
     switch (active) {
       case "Attendance":
@@ -33,7 +34,6 @@ function Dashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 font-sans">
-      {/* Sidebar */}
       <AdminSidebar
         active={active}
         setActive={setActive}
@@ -41,7 +41,6 @@ function Dashboard() {
         setSidebarOpen={setSidebarOpen}
       />
 
-      {/* Main Content */}
       <div className="flex-1 md:ml-64 flex flex-col">
         {/* Header */}
         <header className="flex justify-between items-center p-4 bg-white shadow-sm">
@@ -56,15 +55,17 @@ function Dashboard() {
 
           <div className="flex items-center gap-2 bg-gray-100 p-2 rounded-lg">
             <img
-              src="https://randomuser.me/api/portraits/men/12.jpg"
+              src={
+                user?.profilePic ||
+                "https://randomuser.me/api/portraits/men/12.jpg"
+              }
               alt="Profile"
               className="w-10 h-10 rounded-full border-2 border-red-600"
             />
-            <span className="font-semibold">Manager</span>
+            <span className="font-semibold">{user?.name || "Manager"}</span>
           </div>
         </header>
 
-        {/* Dynamic Section */}
         <main className="flex-1 p-6">{renderContent()}</main>
       </div>
     </div>
