@@ -1,4 +1,4 @@
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter, useLocation } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import { BookingProvider } from "./context/BookingContext";
 import { AttendanceProvider } from "./context/AttendanceContext";
@@ -9,6 +9,22 @@ import { GalleryProvider } from "./context/GalleryContext";
 import AppWrapper from "./AppWrapper";
 import Header from "./components/Header";
 
+function AppContent() {
+  const location = useLocation();
+
+  // Pages where Header should be hidden
+  const noHeaderRoutes = ["/login", "/dashboard"];
+
+  const hideHeader = noHeaderRoutes.includes(location.pathname);
+
+  return (
+    <>
+      {!hideHeader && <Header />}
+      <AppWrapper />
+    </>
+  );
+}
+
 function App() {
   return (
     <UserProvider>
@@ -18,9 +34,7 @@ function App() {
             <MenuProvider>
               <GalleryProvider>
                 <BrowserRouter basename="/">
-                  <Header />
-
-                  <AppWrapper />
+                  <AppContent />
                 </BrowserRouter>
               </GalleryProvider>
             </MenuProvider>
